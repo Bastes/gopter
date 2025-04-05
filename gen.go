@@ -44,8 +44,8 @@ func (g Gen) WithLabel(label string) Gen {
 //
 //	f(value) == true.
 //
-// Use this care, if the sieve to to fine the generator will have many misses which results
-// in an undecided property.
+// Use with care, if the sieve is too fine the generator will have many misses which
+// results in an undecided property.
 func (g Gen) SuchThat(f interface{}) Gen {
 	checkVal := reflect.ValueOf(f)
 	checkType := checkVal.Type()
@@ -101,7 +101,7 @@ func (g Gen) WithShrinker(shrinker Shrinker) Gen {
 	}
 }
 
-// Map creates a derived generator by mapping all generatored values with a given function.
+// Map creates a derived generator by mapping all generated values with a given function.
 // f: has to be a function with one parameter (matching the generated value) and a single return.
 // Note: The derived generator will not have a sieve or shrinker unless you are mapping to the same type
 // Note: The mapping function may have a second parameter "*GenParameters"
@@ -216,7 +216,7 @@ func (g Gen) MapResult(f func(*GenResult) *GenResult) Gen {
 	}
 }
 
-// CombineGens creates a generators from a list of generators.
+// CombineGens creates a generator from a list of generators.
 // The result type will be a []interface{} containing the generated values of each generators in
 // the list.
 // Note: The combined generator will not have a sieve or shrinker.
