@@ -1,6 +1,7 @@
 package gen_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/leanovate/gopter/gen"
@@ -71,7 +72,7 @@ func TestPickNMoreThanAvailable(t *testing.T) {
 	items := []int{1, 2, 3}
 	commonGeneratorTest(t, "pick n more than available", gen.PickN(items, 10), func(value interface{}) bool {
 		result, ok := value.([]int)
-		return ok && intSlicesEqual(result, items)
+		return ok && reflect.DeepEqual(result, items)
 	})
 }
 
@@ -92,7 +93,7 @@ func TestPickNVariety(t *testing.T) {
 			t.Fatal("Sample failed")
 		}
 		slice := sample.([]int)
-		if !intSlicesEqual(slice, firstSlice) {
+		if !reflect.DeepEqual(slice, firstSlice) {
 			foundDifferent = true
 			break
 		}
@@ -103,17 +104,6 @@ func TestPickNVariety(t *testing.T) {
 	}
 }
 
-func intSlicesEqual(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
 
 func intSliceContains(slice []int, val int) bool {
 	for _, item := range slice {

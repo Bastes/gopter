@@ -1,6 +1,7 @@
 package gen_test
 
 import (
+	"reflect"
 	"sort"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestShuffle(t *testing.T) {
 		copy(sortedResult, result)
 		sort.Ints(sortedResult)
 
-		if !intSlicesEqual(sortedOriginal, sortedResult) {
+		if !reflect.DeepEqual(sortedOriginal, sortedResult) {
 			t.Errorf("Shuffled slice does not contain same elements as original.\nOriginal (sorted): %v\nResult (sorted): %v",
 				sortedOriginal, sortedResult)
 		}
@@ -75,7 +76,7 @@ func TestShuffleVariety(t *testing.T) {
 			t.Fatal("Sample failed")
 		}
 		slice := sample.([]int)
-		if !intSlicesEqual(slice, firstSlice) {
+		if !reflect.DeepEqual(slice, firstSlice) {
 			foundDifferent = true
 			break
 		}
