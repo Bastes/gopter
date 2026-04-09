@@ -43,7 +43,6 @@ func Shuffle(items interface{}) gopter.Gen {
 
 		for i := n - 1; i > 0; i-- {
 			j := swaps[i-1].(int)
-			// Swap elements at positions i and j
 			tmp := result.Index(i).Interface()
 			result.Index(i).Set(result.Index(j))
 			result.Index(j).Set(reflect.ValueOf(tmp))

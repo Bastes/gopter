@@ -14,7 +14,6 @@ func TestPickNProperties(t *testing.T) {
 	properties.Property("picking zero items returns empty slice", prop.ForAll(
 		func(items []int) bool {
 			result := samplePickN(items, 0)
-			// Should always return empty slice when picking 0 items
 			return len(result) == 0
 		},
 		gen.SliceOf(gen.Int()),
@@ -23,25 +22,22 @@ func TestPickNProperties(t *testing.T) {
 	properties.Property("picking from an empty slice returns empty slice", prop.ForAll(
 		func(n int) bool {
 			result := samplePickN([]int{}, n)
-			// Should always return empty slice regardless of n
 			return len(result) == 0
 		},
-		gen.IntRange(0, 1000), // Generate random number of items to pick
+		gen.IntRange(0, 1000),
 	))
 
 	properties.Property("picking more than available just returns all items", prop.ForAll(
 		func(items []int, extra int) bool {
-			// Ensure extra is at least 1
 			if extra < 1 {
 				extra = 1
 			}
 			n := len(items) + extra
 			result := samplePickN(items, n)
-			// Should return exactly the original slice (all items, nothing more)
 			return intSlicesEqual(result, items)
 		},
 		gen.SliceOf(gen.Int()),
-		gen.IntRange(1, 100), // Generate a random number >= 1
+		gen.IntRange(1, 100),
 	))
 
 	properties.Property("picked items are subset of original", prop.ForAll(
