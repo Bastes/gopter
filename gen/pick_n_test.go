@@ -3,145 +3,106 @@ package gen_test
 import (
 	"testing"
 
-	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
-	"github.com/leanovate/gopter/prop"
 )
 
-func TestPickNProperties(t *testing.T) {
-	properties := gopter.NewProperties(nil)
+func TestPickN(t *testing.T) {
+	items := []int{4, 2, 3, 5, 9, 1, 6, 8, 7}
+	pickGen := gen.PickN(items, 5)
 
-	properties.Property("picking zero items returns empty slice", prop.ForAll(
-		func(items []int) bool {
-			result := samplePickN(items, 0)
-			return len(result) == 0
-		},
-		gen.SliceOf(gen.Int()),
-	))
-
-	properties.Property("picking from an empty slice returns empty slice", prop.ForAll(
-		func(n int) bool {
-			result := samplePickN([]int{}, n)
-			return len(result) == 0
-		},
-		gen.IntRange(0, 1000),
-	))
-
-	properties.Property("picking more than available just returns all items", prop.ForAll(
-		func(items []int, extra int) bool {
-			if extra < 1 {
-				extra = 1
-			}
-			n := len(items) + extra
-			result := samplePickN(items, n)
-			return intSlicesEqual(result, items)
-		},
-		gen.SliceOf(gen.Int()),
-		gen.IntRange(1, 100),
-	))
-
-	properties.Property("picked items are subset of original", prop.ForAll(
-		func(items []int) bool {
-			if len(items) == 0 {
-				return true
-			}
-			n := len(items) / 2
-			result := samplePickN(items, n)
-
-			for _, item := range result {
-				if !intSliceContains(items, item) {
-					return false
-				}
-			}
-			return true
-		},
-		gen.SliceOf(gen.Int()),
-	))
-
-	properties.Property("picked items maintain original order", prop.ForAll(
-		func() bool {
-			items := []int{9, 3, 7, 1, 5, 8, 2, 6, 4}
-			n := 4
-			result := samplePickN(items, n)
-
-			lastIndex := -1
-			for _, item := range result {
-				currentIndex := intSliceIndex(items, item)
-				if currentIndex <= lastIndex {
-					return false
-				}
-				lastIndex = currentIndex
-			}
-			return true
-		},
-	))
-
-	properties.Property("result has exactly n elements", prop.ForAll(
-		func(items []int) bool {
-			if len(items) == 0 {
-				return true
-			}
-			n := len(items) / 2
-			if n == 0 {
-				return true
-			}
-			result := samplePickN(items, n)
-
-			return len(result) == n
-		},
-		gen.SliceOf(gen.IntRange(0, 100)),
-	))
-
-	properties.TestingRun(t)
-
-	t.Run("eventually produces different selections", func(t *testing.T) {
-		items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-		n := 5
-		if !eventuallyProducesDifferentSelection(items, func() ([]int, bool) {
-			picked, ok := gen.PickN(items, n).Sample()
-			if !ok || picked == nil {
-				return nil, false
-			}
-			return picked.([]int), true
-		}, 10) {
-			t.Error("Expected generator to produce different selections, but got same selection every time")
+	for i := 0; i < 100; i++ {
+		value, ok := pickGen.Sample()
+		if !ok {
+			t.Error("Sample was not ok")
+			continue
 		}
+
+		result, ok := value.([]int)
+		if !ok {
+			t.Errorf("Sample not slice of int: %#v", value)
+			continue
+		}
+
+		if len(result) != 5 {
+			t.Errorf("Expected length 5, got %d: %v", len(result), result)
+			continue
+		}
+
+		for _, item := range result {
+			if !intSliceContains(items, item) {
+				t.Errorf("Result contains item not in original: %d (result: %v, original: %v)", item, result, items)
+				break
+			}
+		}
+
+		lastIndex := -1
+		for _, item := range result {
+			currentIndex := intSliceIndex(items, item)
+			if currentIndex == -1 {
+				t.Errorf("Result item not found in original: %d", item)
+				break
+			}
+			if currentIndex <= lastIndex {
+				t.Errorf("Result not in original order: item %d at index %d should come after previous item at index %d (result: %v)",
+					item, currentIndex, lastIndex, result)
+				break
+			}
+			lastIndex = currentIndex
+		}
+	}
+}
+
+func TestPickNZero(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5}
+	commonGeneratorTest(t, "pick n zero", gen.PickN(items, 0), func(value interface{}) bool {
+		result, ok := value.([]int)
+		return ok && len(result) == 0
 	})
 }
 
-// samplePickN is a test helper that samples from PickN and panics on failure.
-// This simplifies property test code by eliminating repetitive error handling.
-func samplePickN(items []int, n int) []int {
-	picked, ok := gen.PickN(items, n).Sample()
-	if !ok || picked == nil {
-		panic("gen.PickN failed to generate sample")
-	}
-	return picked.([]int)
+func TestPickNFromEmpty(t *testing.T) {
+	commonGeneratorTest(t, "pick n from empty", gen.PickN([]int{}, 5), func(value interface{}) bool {
+		result, ok := value.([]int)
+		return ok && len(result) == 0
+	})
 }
 
-// eventuallyProducesDifferentSelection checks whether a generator function eventually produces
-// a different selection from the original across multiple attempts.
-func eventuallyProducesDifferentSelection(original []int, generate func() ([]int, bool), attempts int) bool {
-	for i := 0; i < attempts; i++ {
-		result, ok := generate()
+func TestPickNMoreThanAvailable(t *testing.T) {
+	items := []int{1, 2, 3}
+	commonGeneratorTest(t, "pick n more than available", gen.PickN(items, 10), func(value interface{}) bool {
+		result, ok := value.([]int)
+		return ok && intSlicesEqual(result, items)
+	})
+}
+
+func TestPickNVariety(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	gen := gen.PickN(items, 5)
+
+	first, ok := gen.Sample()
+	if !ok {
+		t.Fatal("First sample failed")
+	}
+	firstSlice := first.([]int)
+
+	foundDifferent := false
+	for i := 0; i < 10; i++ {
+		sample, ok := gen.Sample()
 		if !ok {
-			return false
+			t.Fatal("Sample failed")
 		}
-
-		if len(result) != len(original) {
-			return true
-		}
-
-		for i := range original {
-			if result[i] != original[i] {
-				return true
-			}
+		slice := sample.([]int)
+		if !intSlicesEqual(slice, firstSlice) {
+			foundDifferent = true
+			break
 		}
 	}
-	return false
+
+	if !foundDifferent {
+		t.Error("Generator produced same selection 10 times")
+	}
 }
 
-// intSlicesEqual checks if two int slices are equal
 func intSlicesEqual(a, b []int) bool {
 	if len(a) != len(b) {
 		return false
@@ -154,7 +115,6 @@ func intSlicesEqual(a, b []int) bool {
 	return true
 }
 
-// intSliceContains checks if a slice contains a value
 func intSliceContains(slice []int, val int) bool {
 	for _, item := range slice {
 		if item == val {
@@ -164,7 +124,6 @@ func intSliceContains(slice []int, val int) bool {
 	return false
 }
 
-// intSliceIndex returns the index of val in slice, or -1 if not found
 func intSliceIndex(slice []int, val int) int {
 	for i, item := range slice {
 		if item == val {

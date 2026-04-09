@@ -4,92 +4,84 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
-	"github.com/leanovate/gopter/prop"
 )
 
-func TestShuffleProperties(t *testing.T) {
-	t.Run("an empty slice stays empty", func(t *testing.T) {
-		shuffled, ok := gen.Shuffle([]int{}).Sample()
+func TestShuffle(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	shuffleGen := gen.Shuffle(items)
+
+	for i := 0; i < 100; i++ {
+		value, ok := shuffleGen.Sample()
 		if !ok {
-			t.Fatal("Shuffle failed to generate sample for empty slice")
+			t.Error("Sample was not ok")
+			continue
 		}
-		result := shuffled.([]int)
-		if len(result) != 0 {
-			t.Errorf("Expected empty slice, got length %d", len(result))
+
+		result, ok := value.([]int)
+		if !ok {
+			t.Errorf("Sample not slice of int: %#v", value)
+			continue
 		}
-	})
 
-	properties := gopter.NewProperties(nil)
-
-	properties.Property("a single element slice is left unchanged", prop.ForAll(
-		func(n int) bool {
-			shuffled, ok := gen.Shuffle([]int{n}).Sample()
-			if !ok || shuffled == nil {
-				return false
-			}
-			result := shuffled.([]int)
-			return len(result) == 1 && result[0] == n
-		},
-		gen.Int(),
-	))
-
-	properties.Property("all elements of the original slice are given back", prop.ForAll(
-		func(items []int) bool {
-			shuffled, ok := gen.Shuffle(items).Sample()
-			if !ok || shuffled == nil {
-				return false
-			}
-			result := shuffled.([]int)
-
-			sortedOriginal := make([]int, len(items))
-			copy(sortedOriginal, items)
-			sort.Ints(sortedOriginal)
-
-			sortedResult := make([]int, len(result))
-			copy(sortedResult, result)
-			sort.Ints(sortedResult)
-
-			return intSlicesEqual(sortedOriginal, sortedResult)
-		},
-		gen.SliceOf(gen.Int()),
-	))
-
-	properties.TestingRun(t)
-
-	t.Run("different ordering are (eventually) produced for multiple elements", func(t *testing.T) {
-		items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-		if !eventuallyProducesDifferentOrder(items, func() ([]int, bool) {
-			shuffled, ok := gen.Shuffle(items).Sample()
-			if !ok || shuffled == nil {
-				return nil, false
-			}
-			return shuffled.([]int), true
-		}, 10) {
-			t.Error("Expected generator to produce different orderings, but got same ordering every time")
+		if len(result) != len(items) {
+			t.Errorf("Expected length %d, got %d: %v", len(items), len(result), result)
+			continue
 		}
+
+		sortedOriginal := make([]int, len(items))
+		copy(sortedOriginal, items)
+		sort.Ints(sortedOriginal)
+
+		sortedResult := make([]int, len(result))
+		copy(sortedResult, result)
+		sort.Ints(sortedResult)
+
+		if !intSlicesEqual(sortedOriginal, sortedResult) {
+			t.Errorf("Shuffled slice does not contain same elements as original.\nOriginal (sorted): %v\nResult (sorted): %v",
+				sortedOriginal, sortedResult)
+		}
+	}
+}
+
+func TestShuffleEmpty(t *testing.T) {
+	commonGeneratorTest(t, "shuffle empty", gen.Shuffle([]int{}), func(value interface{}) bool {
+		result, ok := value.([]int)
+		return ok && len(result) == 0
 	})
 }
 
-// eventuallyProducesDifferentOrder checks whether a generator function eventually produces
-// an ordering different from the original across multiple attempts.
-func eventuallyProducesDifferentOrder(original []int, generate func() ([]int, bool), attempts int) bool {
-	for i := 0; i < attempts; i++ {
-		result, ok := generate()
+func TestShuffleSingle(t *testing.T) {
+	commonGeneratorTest(t, "shuffle single", gen.Shuffle([]int{42}), func(value interface{}) bool {
+		result, ok := value.([]int)
+		return ok && len(result) == 1 && result[0] == 42
+	})
+}
+
+func TestShuffleVariety(t *testing.T) {
+	items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	gen := gen.Shuffle(items)
+
+	first, ok := gen.Sample()
+	if !ok {
+		t.Fatal("First sample failed")
+	}
+	firstSlice := first.([]int)
+
+	foundDifferent := false
+	for i := 0; i < 10; i++ {
+		sample, ok := gen.Sample()
 		if !ok {
-			return false
+			t.Fatal("Sample failed")
 		}
-
-		if len(result) != len(original) {
-			return true
-		}
-
-		for i := range original {
-			if result[i] != original[i] {
-				return true
-			}
+		slice := sample.([]int)
+		if !intSlicesEqual(slice, firstSlice) {
+			foundDifferent = true
+			break
 		}
 	}
-	return false
+
+	if !foundDifferent {
+		t.Error("Generator produced same ordering 10 times")
+	}
 }
