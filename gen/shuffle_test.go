@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"slices"
+	"sort"
 	"testing"
 
 	"github.com/leanovate/gopter"
@@ -44,13 +44,13 @@ func TestShuffleProperties(t *testing.T) {
 
 			sortedOriginal := make([]int, len(items))
 			copy(sortedOriginal, items)
-			slices.Sort(sortedOriginal)
+			sort.Ints(sortedOriginal)
 
 			sortedResult := make([]int, len(result))
 			copy(sortedResult, result)
-			slices.Sort(sortedResult)
+			sort.Ints(sortedResult)
 
-			return slices.Equal(sortedOriginal, sortedResult)
+			return intSlicesEqual(sortedOriginal, sortedResult)
 		},
 		SliceOf(Int()),
 	))
@@ -73,7 +73,7 @@ func TestShuffleProperties(t *testing.T) {
 
 // eventuallyProducesDifferentOrder checks whether a generator function eventually produces
 // an ordering different from the original across multiple attempts.
-func eventuallyProducesDifferentOrder[T comparable](original []T, generate func() ([]T, bool), attempts int) bool {
+func eventuallyProducesDifferentOrder(original []int, generate func() ([]int, bool), attempts int) bool {
 	for i := 0; i < attempts; i++ {
 		result, ok := generate()
 		if !ok {

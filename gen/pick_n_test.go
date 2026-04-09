@@ -1,7 +1,6 @@
 package gen
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/leanovate/gopter"
@@ -38,7 +37,7 @@ func TestPickNProperties(t *testing.T) {
 			n := len(items) + extra
 			result := samplePickN(items, n)
 			// Should return exactly the original slice (all items, nothing more)
-			return slices.Equal(result, items)
+			return intSlicesEqual(result, items)
 		},
 		SliceOf(Int()),
 		IntRange(1, 100), // Generate a random number >= 1
@@ -53,7 +52,7 @@ func TestPickNProperties(t *testing.T) {
 			result := samplePickN(items, n)
 
 			for _, item := range result {
-				if !slices.Contains(items, item) {
+				if !intSliceContains(items, item) {
 					return false
 				}
 			}
@@ -70,7 +69,7 @@ func TestPickNProperties(t *testing.T) {
 
 			lastIndex := -1
 			for _, item := range result {
-				currentIndex := slices.Index(items, item)
+				currentIndex := intSliceIndex(items, item)
 				if currentIndex <= lastIndex {
 					return false
 				}
@@ -125,7 +124,7 @@ func samplePickN(items []int, n int) []int {
 
 // eventuallyProducesDifferentSelection checks whether a generator function eventually produces
 // a different selection from the original across multiple attempts.
-func eventuallyProducesDifferentSelection[T comparable](original []T, generate func() ([]T, bool), attempts int) bool {
+func eventuallyProducesDifferentSelection(original []int, generate func() ([]int, bool), attempts int) bool {
 	for i := 0; i < attempts; i++ {
 		result, ok := generate()
 		if !ok {
@@ -143,4 +142,37 @@ func eventuallyProducesDifferentSelection[T comparable](original []T, generate f
 		}
 	}
 	return false
+}
+
+// intSlicesEqual checks if two int slices are equal
+func intSlicesEqual(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// intSliceContains checks if a slice contains a value
+func intSliceContains(slice []int, val int) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}
+
+// intSliceIndex returns the index of val in slice, or -1 if not found
+func intSliceIndex(slice []int, val int) int {
+	for i, item := range slice {
+		if item == val {
+			return i
+		}
+	}
+	return -1
 }
