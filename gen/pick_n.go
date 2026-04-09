@@ -20,7 +20,7 @@ func PickN[T any](items []T, number int) gopter.Gen {
 	}
 
 	gens := make([]gopter.Gen, number)
-	for i := range number {
+	for i := 0; i < number; i++ {
 		gens[i] = IntRange(i, length-1)
 	}
 
@@ -31,7 +31,7 @@ func PickN[T any](items []T, number int) gopter.Gen {
 		}
 
 		selected := make([]int, number)
-		for i := range number {
+		for i := 0; i < number; i++ {
 			pickIdx := selections[i].(int)
 			selected[i] = available[pickIdx]
 			available[pickIdx] = available[i]

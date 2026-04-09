@@ -74,7 +74,7 @@ func TestShuffleProperties(t *testing.T) {
 // eventuallyProducesDifferentOrder checks whether a generator function eventually produces
 // an ordering different from the original across multiple attempts.
 func eventuallyProducesDifferentOrder[T comparable](original []T, generate func() ([]T, bool), attempts int) bool {
-	for range attempts {
+	for i := 0; i < attempts; i++ {
 		result, ok := generate()
 		if !ok {
 			return false

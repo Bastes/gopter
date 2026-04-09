@@ -10,7 +10,7 @@ func Shuffle[T any](items []T) gopter.Gen {
 	}
 
 	gens := make([]gopter.Gen, n-1)
-	for i := range n - 1 {
+	for i := 0; i < n-1; i++ {
 		gens[i] = IntRange(0, i+1)
 	}
 

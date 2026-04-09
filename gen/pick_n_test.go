@@ -126,7 +126,7 @@ func samplePickN(items []int, n int) []int {
 // eventuallyProducesDifferentSelection checks whether a generator function eventually produces
 // a different selection from the original across multiple attempts.
 func eventuallyProducesDifferentSelection[T comparable](original []T, generate func() ([]T, bool), attempts int) bool {
-	for range attempts {
+	for i := 0; i < attempts; i++ {
 		result, ok := generate()
 		if !ok {
 			return false
