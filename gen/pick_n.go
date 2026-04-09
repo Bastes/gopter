@@ -30,7 +30,6 @@ func PickN(items interface{}, number int) gopter.Gen {
 		gens[i] = IntRange(i, length-1)
 	}
 
-	itemsCopy := items
 	sliceType := itemsVal.Type()
 	combinedGen := gopter.CombineGens(gens...)
 
@@ -42,7 +41,6 @@ func PickN(items interface{}, number int) gopter.Gen {
 		}
 
 		selectionsSlice := selections.([]interface{})
-		itemsVal := reflect.ValueOf(itemsCopy)
 		available := make([]int, length)
 		for i := range available {
 			available[i] = i
