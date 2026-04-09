@@ -1,16 +1,17 @@
-package gen
+package gen_test
 
 import (
 	"sort"
 	"testing"
 
 	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
 )
 
 func TestShuffleProperties(t *testing.T) {
 	t.Run("an empty slice stays empty", func(t *testing.T) {
-		shuffled, ok := Shuffle([]int{}).Sample()
+		shuffled, ok := gen.Shuffle([]int{}).Sample()
 		if !ok {
 			t.Fatal("Shuffle failed to generate sample for empty slice")
 		}
@@ -24,19 +25,19 @@ func TestShuffleProperties(t *testing.T) {
 
 	properties.Property("a single element slice is left unchanged", prop.ForAll(
 		func(n int) bool {
-			shuffled, ok := Shuffle([]int{n}).Sample()
+			shuffled, ok := gen.Shuffle([]int{n}).Sample()
 			if !ok || shuffled == nil {
 				return false
 			}
 			result := shuffled.([]int)
 			return len(result) == 1 && result[0] == n
 		},
-		Int(),
+		gen.Int(),
 	))
 
 	properties.Property("all elements of the original slice are given back", prop.ForAll(
 		func(items []int) bool {
-			shuffled, ok := Shuffle(items).Sample()
+			shuffled, ok := gen.Shuffle(items).Sample()
 			if !ok || shuffled == nil {
 				return false
 			}
@@ -52,7 +53,7 @@ func TestShuffleProperties(t *testing.T) {
 
 			return intSlicesEqual(sortedOriginal, sortedResult)
 		},
-		SliceOf(Int()),
+		gen.SliceOf(gen.Int()),
 	))
 
 	properties.TestingRun(t)
@@ -60,7 +61,7 @@ func TestShuffleProperties(t *testing.T) {
 	t.Run("different ordering are (eventually) produced for multiple elements", func(t *testing.T) {
 		items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 		if !eventuallyProducesDifferentOrder(items, func() ([]int, bool) {
-			shuffled, ok := Shuffle(items).Sample()
+			shuffled, ok := gen.Shuffle(items).Sample()
 			if !ok || shuffled == nil {
 				return nil, false
 			}

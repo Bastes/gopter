@@ -1,9 +1,10 @@
-package gen
+package gen_test
 
 import (
 	"testing"
 
 	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
 )
 
@@ -16,7 +17,7 @@ func TestPickNProperties(t *testing.T) {
 			// Should always return empty slice when picking 0 items
 			return len(result) == 0
 		},
-		SliceOf(Int()),
+		gen.SliceOf(gen.Int()),
 	))
 
 	properties.Property("picking from an empty slice returns empty slice", prop.ForAll(
@@ -25,7 +26,7 @@ func TestPickNProperties(t *testing.T) {
 			// Should always return empty slice regardless of n
 			return len(result) == 0
 		},
-		IntRange(0, 1000), // Generate random number of items to pick
+		gen.IntRange(0, 1000), // Generate random number of items to pick
 	))
 
 	properties.Property("picking more than available just returns all items", prop.ForAll(
@@ -39,8 +40,8 @@ func TestPickNProperties(t *testing.T) {
 			// Should return exactly the original slice (all items, nothing more)
 			return intSlicesEqual(result, items)
 		},
-		SliceOf(Int()),
-		IntRange(1, 100), // Generate a random number >= 1
+		gen.SliceOf(gen.Int()),
+		gen.IntRange(1, 100), // Generate a random number >= 1
 	))
 
 	properties.Property("picked items are subset of original", prop.ForAll(
@@ -58,7 +59,7 @@ func TestPickNProperties(t *testing.T) {
 			}
 			return true
 		},
-		SliceOf(Int()),
+		gen.SliceOf(gen.Int()),
 	))
 
 	properties.Property("picked items maintain original order", prop.ForAll(
@@ -92,7 +93,7 @@ func TestPickNProperties(t *testing.T) {
 
 			return len(result) == n
 		},
-		SliceOf(IntRange(0, 100)),
+		gen.SliceOf(gen.IntRange(0, 100)),
 	))
 
 	properties.TestingRun(t)
@@ -101,7 +102,7 @@ func TestPickNProperties(t *testing.T) {
 		items := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 		n := 5
 		if !eventuallyProducesDifferentSelection(items, func() ([]int, bool) {
-			picked, ok := PickN(items, n).Sample()
+			picked, ok := gen.PickN(items, n).Sample()
 			if !ok || picked == nil {
 				return nil, false
 			}
@@ -115,9 +116,9 @@ func TestPickNProperties(t *testing.T) {
 // samplePickN is a test helper that samples from PickN and panics on failure.
 // This simplifies property test code by eliminating repetitive error handling.
 func samplePickN(items []int, n int) []int {
-	picked, ok := PickN(items, n).Sample()
+	picked, ok := gen.PickN(items, n).Sample()
 	if !ok || picked == nil {
-		panic("PickN failed to generate sample")
+		panic("gen.PickN failed to generate sample")
 	}
 	return picked.([]int)
 }
