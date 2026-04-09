@@ -25,6 +25,7 @@ func Shuffle(items interface{}) gopter.Gen {
 		gens[i] = IntRange(0, i+1)
 	}
 
+	emptyResult := reflect.MakeSlice(itemsVal.Type(), 0, 0).Interface()
 	sliceType := itemsVal.Type()
 	combinedGen := gopter.CombineGens(gens...)
 
@@ -32,7 +33,7 @@ func Shuffle(items interface{}) gopter.Gen {
 		genResult := combinedGen(genParams)
 		swapsValue, ok := genResult.Retrieve()
 		if !ok {
-			return gopter.NewGenResult(reflect.MakeSlice(sliceType, 0, 0).Interface(), gopter.NoShrinker)
+			return gopter.NewGenResult(emptyResult, gopter.NoShrinker)
 		}
 
 		swaps := swapsValue.([]interface{})

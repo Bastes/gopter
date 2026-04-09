@@ -32,6 +32,7 @@ func PickN(items interface{}, number int) gopter.Gen {
 		gens[i] = IntRange(i, length-1)
 	}
 
+	emptyResult := reflect.MakeSlice(itemsVal.Type(), 0, 0).Interface()
 	sliceType := itemsVal.Type()
 	combinedGen := gopter.CombineGens(gens...)
 
@@ -39,7 +40,7 @@ func PickN(items interface{}, number int) gopter.Gen {
 		genResult := combinedGen(genParams)
 		selections, ok := genResult.Retrieve()
 		if !ok {
-			return gopter.NewGenResult(reflect.MakeSlice(sliceType, 0, 0).Interface(), gopter.NoShrinker)
+			return gopter.NewGenResult(emptyResult, gopter.NoShrinker)
 		}
 
 		selectionsSlice := selections.([]interface{})
